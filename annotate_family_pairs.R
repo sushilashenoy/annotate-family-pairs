@@ -20,7 +20,7 @@ spec <- matrix(c(
   'parents', 'p', 0, 'logical', 'Include individuals who only appear as mothers or fathers in the .fam file'
 ), byrow = TRUE, ncol = 5)
 opt <- getopt(spec)
-if ( interactive() ) opt <- list(input='safs_filter2.fam', 'extra'=TRUE, nthreads=10)
+if ( interactive() ) opt <- list(input='ex.fam', 'extra'=TRUE)
 
 if ( !is.null(opt$help) ) {
   cat(getopt(spec, usage=TRUE))
@@ -313,21 +313,27 @@ make.family.pairs <- function(ft, fam) {
     fam1$MID[fam1$MID != 0] <- substring(fam1$MID[fam1$MID != 0], nchar(fid1)+2)
   }
 
-  if ( add.parents ) {
-    parent.ids <- setdiff(union(fam1$PID, fam1$MID), '0')
-    missing.par <- !parent.ids %in% fam1$IID
-    if ( any(missing.par) ) {
-      fam1 <- rbind(fam1, data.frame(IID=parent.ids[missing.par], PID=0, MID=0))
-    }
+  parent.ids <- setdiff(union(fam1$PID, fam1$MID), '0')
+  missing.par <- !parent.ids %in% fam1$IID
+  if ( any(missing.par) ) {
+    fam1p <- rbind(fam1, data.frame(IID=parent.ids[missing.par], PID=0, MID=0))
+  } else {
+    fam1p <- fam1
   }
 
   if ( nrow(fam1) < 2 ) {
     return ( NULL )
   }
-
-  pairs <- make.pairs(fam1$IID)
   
-  get.rel <- get.rel.from.fam(fam1)
+  # Enumerate relationships to appear in output
+  if ( add.parents ) {
+    pairs <- make.pairs(fam1p$IID)
+  } else {
+    pairs <- make.pairs(fam1$IID)
+  }
+  
+  # Always include "missing parents" for this function to avoid errors
+  get.rel <- get.rel.from.fam(fam1p)
   rels <- get.rel(pairs[, 1], pairs[, 2])
   
   message('Family ', ft, ' has ', nrow(fam1), ' individuals (', nrow(pairs), ' pairs).')
