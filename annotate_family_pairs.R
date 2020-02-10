@@ -20,7 +20,7 @@ spec <- matrix(c(
   'parents', 'p', 0, 'logical', 'Include individuals who only appear as mothers or fathers in the .fam file'
 ), byrow = TRUE, ncol = 5)
 opt <- getopt(spec)
-if ( interactive() ) opt <- list(input='ex.fam', 'extra'=TRUE)
+if ( interactive() ) opt <- list(input = 'err.fam', parents = TRUE)
 
 if ( !is.null(opt$help) ) {
   cat(getopt(spec, usage=TRUE))
@@ -100,8 +100,8 @@ shh(library('igraph'))
 
 get.rel.from.fam <- function (fam) {
   # To find common ancestors build a graph with edges from each individual to their parents
-  p.edges <- as.vector(t(cbind(fam$IID, fam$PID)[fam$PID != '0', ]))
-  m.edges <- as.vector(t(cbind(fam$IID, fam$MID)[fam$MID != '0', ]))
+  p.edges <- as.character(as.vector(t(cbind(fam$IID, fam$PID)[fam$PID != '0', ])))
+  m.edges <- as.character(as.vector(t(cbind(fam$IID, fam$MID)[fam$MID != '0', ])))
   ig <- make_directed_graph(c(p.edges, m.edges))
   
   # Measure distance from every individual to their ancestors
@@ -262,6 +262,12 @@ get.relationship <- function(d1, d2, a) {
 # =========== Load fam data =========
 message('Loading fam data...')
 fam <- read.table(fam.file, col.names=c('FID', 'IID', 'PID', 'MID', 'SEX', 'PHENO'))
+
+# Force IDs to character type to avoid incorrect interpretation of numeric IDs as row indices
+fam$FID <- as.character(fam$FID)
+fam$IID <- as.character(fam$IID)
+fam$PID <- as.character(fam$PID)
+fam$MID <- as.character(fam$MID)
 
 if ( construct.fam ) {
   message('Identifying families...')
